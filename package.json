@@ -1,7 +1,7 @@
 {
   "name": "tehran-vendors",
   "version": "1.0.0",
-  "description": "Vendor management system",
+  "description": "Tehran Vendor Management System",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
