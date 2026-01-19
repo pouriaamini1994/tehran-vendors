@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tehran Vendors Management</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .left-panel {
+            flex: 1;
+            min-width: 350px;
+        }
+        
+        .right-panel {
+            flex: 2;
+            min-width: 600px;
+        }
+        
+        #map {
+            height: 600px;
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 2px solid #ddd;
+        }
+        
+        .form-section, .vendors-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 28px;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            font-size: 22px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            flex: 1;
+        }
+        
+        #addBtn {
+            background: #27ae60;
+            color: white;
+        }
+        
+        #addBtn:hover {
+            background: #219653;
+        }
+        
+        #updateBtn {
+            background: #f39c12;
+            color: white;
+            display: none;
+        }
+        
+        #updateBtn:hover {
+            background: #e67e22;
+        }
+        
+        #cancelBtn {
+            background: #95a5a6;
+            color: white;
+            display: none;
+        }
+        
+        #cancelBtn:hover {
+            background: #7f8c8d;
+        }
+        
+        #exportBtn {
+            background: #3498db;
+            color: white;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        #exportBtn:hover {
+            background: #2980b9;
+        }
+        
+        .vendor-item {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-right: 5px solid #3498db;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .vendor-item:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .vendor-item.editing {
+            border-right-color: #f39c12;
+            background: #fff9e6;
+        }
+        
+        .vendor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .vendor-name {
+            font-weight: bold;
+            font-size: 20px;
+            color: #2c3e50;
+        }
+        
+        .vendor-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .edit-btn {
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .edit-btn:hover {
+            background: #e67e22;
+        }
+        
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+        
+        .vendor-coords {
+            color: #7f8c8d;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .vendor-radius {
+            color: #27ae60;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .vendor-details {
+            color: #34495e;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ddd;
+        }
+        
+        .vendor-added {
+            font-size: 12px;
+            color: #95a5a6;
+            margin-top: 10px;
+        }
+        
+        .no-vendors {
+            text-align: center;
+            color: #95a5a6;
+            padding: 40px 20px;
+            font-size: 18px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #3498db;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c0392b;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .left-panel, .right-panel {
+                min-width: 100%;
+            }
+            
+            #map {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🗺️ مدیریت فروشندگان تهران</h1>
+    
+    <div class="container">
+        <div class="left-panel">
+            <!-- فرم افزودن/ویرایش فروشنده -->
+            <div class="form-section">
+                <h2>🎯 افزودن فروشنده جدید</h2>
+                <div class="error" id="errorMessage"></div>
+                
+                <div class="form-group">
+                    <label for="vendorName">نام فروشنده:</label>
+                    <input type="text" id="vendorName" placeholder="مثال: میدان هروی" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vendorLat">عرض جغرافیایی:</label>
+                    <input type="number" id="vendorLat" step="any" placeholder="مثال: 35.759209" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vendorLng">طول جغرافیایی:</label>
+                    <input type="number" id="vendorLng" step="any" placeholder="مثال: 51.473227" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vendorRadius">شعاع پوشش (متر):</label>
+                    <input type="number" id="vendorRadius" value="1000" min="10" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vendorDetails">توضیحات (اختیاری):</label>
+                    <textarea id="vendorDetails" rows="3" placeholder="اطلاعات اضافی..."></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button id="addBtn" onclick="addVendor()">➕ افزودن فروشنده</button>
+                    <button id="updateBtn" onclick="updateVendor()">💾 ذخیره تغییرات</button>
+                    <button id="cancelBtn" onclick="cancelEdit()">❌ انصراف</button>
+                </div>
+                
+                <button id="exportBtn" onclick="exportData()">📥 خروجی JSON</button>
+            </div>
+            
+            <!-- لیست فروشندگان -->
+            <div class="vendors-section">
+                <h2>📋 لیست فروشندگان</h2>
+                <div id="vendorsList">
+                    <div class="loading">در حال بارگذاری...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <!-- نقشه -->
+            <h2>🗺️ نقشه پوشش فروشندگان</h2>
+            <div id="map"></div>
+            <div class="map-controls">
+                <small>برای انتخاب مختصات روی نقشه کلیک کنید</small>
+            </div>
+            
+            <!-- خروجی JSON -->
+            <div id="jsonOutput" style="margin-top: 20px; display: none;"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // API Configuration
+        const API_BASE_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000/api' 
+            : 'https://tehran-vendors.onrender.com/api';
+        
+        // Global variables
+        let map;
+        let vendors = [];
+        let editingVendorId = null;
+        let markers = [];
+        let circles = [];
+        
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([35.6892, 51.3890], 12); // Tehran center
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18
+            }).addTo(map);
+            
+            // Click on map to get coordinates
+            map.on('click', function(e) {
+                document.getElementById('vendorLat').value = e.latlng.lat.toFixed(6);
+                document.getElementById('vendorLng').value = e.latlng.lng.toFixed(6);
+            });
+        }
+        
+        // Load all vendors from API
+        async function loadVendors() {
+            showLoading(true);
+            try {
+                const response = await fetch(`${API_BASE_URL}/vendors`);
+                if (!response.ok) throw new Error('خطا در دریافت داده‌ها');
+                
+                vendors = await response.json();
+                updateMap();
+                updateVendorsList();
+            } catch (error) {
+                showError('خطا در بارگذاری فروشندگان: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Add new vendor
+        async function addVendor() {
+            const vendorData = getFormData();
+            if (!validateForm(vendorData)) return;
+            
+            showLoading(true);
+            try {
+                const response = await fetch(`${API_BASE_URL}/vendors`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(vendorData)
+                });
+                
+                if (!response.ok) throw new Error('خطا در ذخیره‌سازی');
+                
+                const newVendor = await response.json();
+                vendors.push(newVendor);
+                updateMap();
+                updateVendorsList();
+                clearForm();
+                map.setView([newVendor.lat, newVendor.lng], 13);
+                
+                showError('');
+            } catch (error) {
+                showError('خطا در افزودن فروشنده: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Edit vendor
+        function editVendor(vendorId) {
+            const vendor = vendors.find(v => v.id == vendorId);
+            if (!vendor) return;
+            
+            editingVendorId = vendorId;
+            fillForm(vendor);
+            
+            document.getElementById('addBtn').style.display = 'none';
+            document.getElementById('updateBtn').style.display = 'block';
+            document.getElementById('cancelBtn').style.display = 'block';
+            
+            highlightVendorInList(vendorId);
+            map.setView([vendor.lat, vendor.lng], 14);
+        }
+        
+        // Update vendor
+        async function updateVendor() {
+            if (!editingVendorId) return;
+            
+            const vendorData = getFormData();
+            if (!validateForm(vendorData)) return;
+            
+            showLoading(true);
+            try {
+                const response = await fetch(`${API_BASE_URL}/vendors/${editingVendorId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(vendorData)
+                });
+                
+                if (!response.ok) throw new Error('خطا در بروزرسانی');
+                
+                await loadVendors(); // Reload all data
+                cancelEdit();
+                
+                showError('');
+            } catch (error) {
+                showError('خطا در بروزرسانی فروشنده: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Delete vendor
+        async function deleteVendor(vendorId) {
+            if (!confirm('آیا از حذف این فروشنده مطمئن هستید؟')) return;
+            
+            showLoading(true);
+            try {
+                const response = await fetch(`${API_BASE_URL}/vendors/${vendorId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) throw new Error('خطا در حذف');
+                
+                await loadVendors(); // Reload all data
+                
+                showError('');
+            } catch (error) {
+                showError('خطا در حذف فروشنده: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Cancel edit mode
+        function cancelEdit() {
+            editingVendorId = null;
+            clearForm();
+            
+            document.getElementById('addBtn').style.display = 'block';
+            document.getElementById('updateBtn').style.display = 'none';
+            document.getElementById('cancelBtn').style.display = 'none';
+            
+            document.querySelectorAll('.vendor-item').forEach(item => {
+                item.classList.remove('editing');
+            });
+        }
+        
+        // Update map with vendors
+        function updateMap() {
+            // Clear existing markers and circles
+            markers.forEach(marker => map.removeLayer(marker));
+            circles.forEach(circle => map.removeLayer(circle));
+            markers = [];
+            circles = [];
+            
+            // Add new markers and circles
+            vendors.forEach(vendor => {
+                // Add circle for coverage radius
+                const circle = L.circle([vendor.lat, vendor.lng], {
+                    radius: vendor.radius,
+                    color: '#e74c3c',
+                    fillColor: '#e74c3c',
+                    fillOpacity: 0.2,
+                    weight: 2
+                }).addTo(map);
+                circles.push(circle);
+                
+                // Add marker
+                const marker = L.marker([vendor.lat, vendor.lng]).addTo(map);
+                markers.push(marker);
+                
+                // Add popup
+                const popupContent = `
+                    <div style="text-align: right;">
+                        <strong>${vendor.name}</strong><br>
+                        شعاع پوشش: ${vendor.radius.toLocaleString()} متر<br>
+                        <small>عرض: ${vendor.lat.toFixed(6)}, طول: ${vendor.lng.toFixed(6)}</small>
+                        ${vendor.details ? `<hr><p>${vendor.details}</p>` : ''}
+                        <hr>
+                        <button onclick="editVendor(${vendor.id})" style="background: #f39c12; color: white; border: none; padding: 5px 10px; margin-left: 5px; cursor: pointer; border-radius: 3px;">ویرایش</button>
+                        <button onclick="deleteVendor(${vendor.id})" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px;">حذف</button>
+                    </div>
+                `;
+                marker.bindPopup(popupContent);
+                circle.bindPopup(popupContent);
+            });
+        }
+        
+        // Update vendors list display
+        function updateVendorsList() {
+            const vendorsListContainer = document.getElementById('vendorsList');
+            
+            if (vendors.length === 0) {
+                vendorsListContainer.innerHTML = '<div class="no-vendors">هیچ فروشنده‌ای ثبت نشده است</div>';
+                return;
+            }
+            
+            vendorsListContainer.innerHTML = vendors.map(vendor => `
+                <div class="vendor-item ${editingVendorId == vendor.id ? 'editing' : ''}" id="vendor-${vendor.id}">
+                    <div class="vendor-header">
+                        <div class="vendor-name">${vendor.name}</div>
+                        <div class="vendor-actions">
+                            <button class="edit-btn" onclick="editVendor(${vendor.id})">✏️ ویرایش</button>
+                            <button class="delete-btn" onclick="deleteVendor(${vendor.id})">🗑️ حذف</button>
+                        </div>
+                    </div>
+                    <div class="vendor-coords">
+                        عرض: ${vendor.lat.toFixed(6)}, طول: ${vendor.lng.toFixed(6)}
+                    </div>
+                    <div class="vendor-radius">
+                        شعاع پوشش: ${vendor.radius.toLocaleString()} متر
+                    </div>
+                    ${vendor.details ? `<div class="vendor-details">${vendor.details}</div>` : ''}
+                    <div class="vendor-added">
+                        تاریخ افزودن: ${vendor.added || 'نامشخص'}
+                        ${vendor.updated ? `<br>آخرین بروزرسانی: ${vendor.updated}` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Export data as JSON
+        function exportData() {
+            const exportObj = {
+                exported_at: new Date().toLocaleString('fa-IR'),
+                vendors: vendors.map(v => ({
+                    name: v.name,
+                    lat: v.lat,
+                    lng: v.lng,
+                    radius: v.radius,
+                    details: v.details || ''
+                }))
+            };
+            
+            const jsonStr = JSON.stringify(exportObj, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `vendors-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Helper functions
+        function getFormData() {
+            return {
+                name: document.getElementById('vendorName').value.trim(),
+                lat: parseFloat(document.getElementById('vendorLat').value),
+                lng: parseFloat(document.getElementById('vendorLng').value),
+                radius: parseFloat(document.getElementById('vendorRadius').value),
+                details: document.getElementById('vendorDetails').value.trim()
+            };
+        }
+        
+        function validateForm(data) {
+            if (!data.name) {
+                showError('لطفاً نام فروشنده را وارد کنید');
+                return false;
+            }
+            if (isNaN(data.lat) || data.lat < -90 || data.lat > 90) {
+                showError('عرض جغرافیایی معتبر نیست (بین ۹۰- تا ۹۰+)');
+                return false;
+            }
+            if (isNaN(data.lng) || data.lng < -180 || data.lng > 180) {
+                showError('طول جغرافیایی معتبر نیست (بین ۱۸۰- تا ۱۸۰+)');
+                return false;
+            }
+            if (isNaN(data.radius) || data.radius < 10) {
+                showError('شعاع پوشش باید حداقل ۱۰ متر باشد');
+                return false;
+            }
+            return true;
+        }
+        
+        function fillForm(vendor) {
+            document.getElementById('vendorName').value = vendor.name;
+            document.getElementById('vendorLat').value = vendor.lat;
+            document.getElementById('vendorLng').value = vendor.lng;
+            document.getElementById('vendorRadius').value = vendor.radius;
+            document.getElementById('vendorDetails').value = vendor.details || '';
+        }
+        
+        function clearForm() {
+            document.getElementById('vendorName').value = '';
+            document.getElementById('vendorLat').value = '';
+            document.getElementById('vendorLng').value = '';
+            document.getElementById('vendorRadius').value = '1000';
+            document.getElementById('vendorDetails').value = '';
+        }
+        
+        function highlightVendorInList(vendorId) {
+            document.querySelectorAll('.vendor-item').forEach(item => {
+                item.classList.remove('editing');
+            });
+            const element = document.getElementById(`vendor-${vendorId}`);
+            if (element) element.classList.add('editing');
+        }
+        
+        function showLoading(show) {
+            const vendorsList = document.getElementById('vendorsList');
+            if (show) {
+                vendorsList.innerHTML = '<div class="loading">در حال پردازش...</div>';
+            }
+        }
+        
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.style.display = message ? 'block' : 'none';
+        }
+        
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            loadVendors();
+        });
+    </script>
+</body>
+</html>
